@@ -18,13 +18,20 @@ class DBConnect:
         else:
             self.conn.commit()
             self.cursor.close()
-            print("Transação realizada com sucesso!")
+            print("Transaçãao realizada com sucesso.")
         self.conn.close()
         return False
 
 
 if __name__ == "__main__":
     ...    
+    import psycopg2
+    print("Teste de conexão:")
+    try:
+        with DBConnect(connector = psycopg2, dbname="python", user="postgres", password="postgres", host="192.168.0.112", port="5432") as cursor:
+            cursor.execute("select 1")
+            print("Conexão OK!\n")
+    except Exception as e:
+        print("A conexão falho, verifique os parâmetros.\n")
+        
 
-    # with DBConnect("postgres", "postgres", "postgres", "192.168.0.112", "5432") as conexao:
-    #     ...
