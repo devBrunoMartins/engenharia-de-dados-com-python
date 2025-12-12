@@ -19,21 +19,46 @@ df = df[['Numero_da_Ocorrencia',
         ]]
 
 
-def corrigir(title:str):
+
+def padronize_titulos(title:str) -> str:
+    """
+    Padroniza os nomes dos títulos das colunas em um formato 
+    formado snake_case
+    
+    :param title: Nome de coluna a ser padronizado
+    :type title: str
+    :return: Nome de coluna padronizado
+    :rtype: str
+    """
     title = title.lower().strip().replace(' ', '_')
     title = unidecode.unidecode(title)
     title = re.sub(r'[^a-zA-Z0-9_]', '', title)
     return title
 
-df.columns = df.columns.map(corrigir)
-# print(df.columns)
-df.head(10)
-buffer_size = 1000
-buffer = []
+def exec_query(cursor, buffer):
+    cursor.executemany("""
+            INSERT INTO anac              
+                (numero_da_ocorrencia,
+                classificacao_da_ocorrencia,
+                data_da_ocorrencia,
+                municipio,
+                uf,
+                regiao,
+                nome_do_fabricante) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""", buffer)
+
+
+df.columns = df.columns.map(padronize_titulos)
+
 
 with DBConnect(connector = psycopg2, dbname="python", user="postgres", password="postgres", host="192.168.0.112", port="5432") as cursor:
-    registros =  df.iterrows()
-    for _, row in registros:
+    #Limpar dados antes da carga
+    cursor.execute("DELETE FROM anac")
+
+    buffer_size = 1000
+    buffer = []
+
+    for _, row in df.iterrows():
         buffer.append((
         row['numero_da_ocorrencia'],
         row['classificacao_da_ocorrencia'],
@@ -45,28 +70,9 @@ with DBConnect(connector = psycopg2, dbname="python", user="postgres", password=
         ))
 
         if len(buffer) == buffer_size:
-            cursor.executemany("""
-                        INSERT INTO anac              
-                           (numero_da_ocorrencia,
-                           classificacao_da_ocorrencia,
-                           data_da_ocorrencia,
-                           municipio,
-                           uf,
-                           regiao,
-                           nome_do_fabricante) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s)""", buffer) 
+            exec_query(cursor, buffer)
 
             buffer.clear()
     
     if buffer:
-        cursor.executemany("""
-                        INSERT INTO anac 
-                           (numero_da_ocorrencia,
-                           classificacao_da_ocorrencia,
-                           data_da_ocorrencia,
-                           municipio,
-                           uf,
-                           regiao,
-                           nome_do_fabricante) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s)""", buffer)
-    
+        exec_query(cursor, buffer)
