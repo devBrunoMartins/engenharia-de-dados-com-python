@@ -32,6 +32,6 @@ if __name__ == "__main__":
             cursor.execute("select 1")
             print("Conexão OK!\n")
     except Exception as e:
-        print("A conexão falho, verifique os parâmetros.\n")
+        print("A conexão falhou, verifique os parâmetros.\n")
         
 
