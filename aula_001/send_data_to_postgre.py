@@ -1,8 +1,18 @@
 import psycopg2
-from conect_postgre import DBConnect
+from conect_postgre_sql import DBConnect
 import pandas as pd
 import unidecode
 import re
+
+
+connector   = psycopg2
+dbname      = "python"
+user        = "postgres"
+password    = "postgres"
+host        = "192.168.0.112"
+port        = "5432"
+
+
 
 
 pd.set_option('display.max_columns', None)
@@ -51,9 +61,9 @@ def exec_query(cursor, buffer):
 df.columns = df.columns.map(padronize_titulos)
 
 
-with DBConnect(connector = psycopg2, dbname="python", user="postgres", password="postgres", host="192.168.0.112", port="5432") as cursor:
+with DBConnect(connector = connector, dbname=dbname, user=user, password=password, host=host, port=port) as db_connect:
     #Limpar dados antes da carga
-    cursor.execute("DELETE FROM anac")
+    db_connect._cursor.execute("DELETE FROM anac")
 
     buffer_size = 1000
     buffer = []
@@ -70,9 +80,9 @@ with DBConnect(connector = psycopg2, dbname="python", user="postgres", password=
         ))
 
         if len(buffer) == buffer_size:
-            exec_query(cursor, buffer)
+            exec_query(db_connect._cursor, buffer)
 
             buffer.clear()
     
     if buffer:
-        exec_query(cursor, buffer)
+        exec_query(db_connect._cursor(), buffer)
